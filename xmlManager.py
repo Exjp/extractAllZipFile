@@ -1,5 +1,5 @@
 from xml import etree
-import xml.etree.cElementTree as ET
+import xml.etree.ElementTree as ET
 from io import BytesIO
 
 import os
@@ -15,8 +15,6 @@ def emptyXml():
     tree.write("page.xml",
            xml_declaration=True,encoding='utf-8',
            method="xml")
-
-    # tree.write("filename.xml")
 
 def main():
     emptyXml()
