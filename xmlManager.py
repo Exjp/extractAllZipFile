@@ -20,7 +20,7 @@ def emptyXml():
            xml_declaration=True,encoding='utf-8',
            method="xml")
 
-# vérifier que les champs sont uniques, vérifier que les champs sont corrects
+# vérifier que les champs sont uniques, vérifier que les champs sont corrects -> return une erreur sinon
 def addUser(aliasValue, numberValue, keyValue):
     user = ET.Element('user')
     user.set("alias", aliasValue)
@@ -31,7 +31,7 @@ def addUser(aliasValue, numberValue, keyValue):
     root.append(user)
 
 
-# Element.get pour trouver les attributs
+# return un erreur si pas trouvé, nullptr, verif le nom en entrée
 def removeUser(name):
     for elem in root:
         if elem.attrib['alias'] == name:
@@ -56,7 +56,7 @@ def getKeyFromAlias(name):
             break
 
 
-#return une liste des alias dans la bdd
+#return une liste des alias dans la bdd, erreur si y'a personne dans la bdd
 def getAliases():
     return [elem.attrib['alias'] for elem in root]
 
