@@ -2,11 +2,11 @@ import xml.etree.ElementTree as ET
 
 import os
 import random
-import numpy
 #champ xml pour banni ou non, à exclure des fonctions getAliases, getnumberfromalias et random
 
 def init():
-    emptyXml()
+    if not os.path.isfile('page.xml'):
+        emptyXml()
     global tree
     tree = ET.parse('page.xml')
     global root
@@ -20,7 +20,7 @@ def emptyXml():
            xml_declaration=True,encoding='utf-8',
            method="xml")
 
-# vérifier que les champs sont uniques, vérifier que les champs sont corrects
+# vérifier que les champs sont uniques, vérifier que les champs sont corrects -> return une erreur sinon
 def addUser(aliasValue, numberValue, keyValue):
     user = ET.Element('user')
     user.set("alias", aliasValue)
@@ -29,13 +29,15 @@ def addUser(aliasValue, numberValue, keyValue):
     key = ET.SubElement(user, "key")
     key.text = keyValue
     root.append(user)
+    tree.write('page.xml', encoding="utf-8", xml_declaration=True)
 
 
-# Element.get pour trouver les attributs
+# return un erreur si pas trouvé, nullptr, verif le nom en entrée
 def removeUser(name):
     for elem in root:
         if elem.attrib['alias'] == name:
             root.remove(elem)
+    tree.write('page.xml', encoding="utf-8", xml_declaration=True)
 
 #verifier les noms en entrée, return un erreur si ça trouve rien, nullptr
 def getNumberFromAlias(name):
@@ -56,7 +58,7 @@ def getKeyFromAlias(name):
             break
 
 
-#return une liste des alias dans la bdd
+#return une liste des alias dans la bdd, erreur si y'a personne dans la bdd
 def getAliases():
     return [elem.attrib['alias'] for elem in root]
 
@@ -85,11 +87,7 @@ def randomUsers(num,sender):
 
 
 def main():
-    addUser("Thierry", "+33666666666", "key")
-    addUser("Jak", "+33626486623", "key2")
-    addUser("Martin", "+33648332047", "key3")
     x = getAliases()
-    tree.write('page.xml', encoding="utf-8", xml_declaration=True)
 
 if __name__ == "__main__":
     init()
