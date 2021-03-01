@@ -1,20 +1,3 @@
-def callBack(commande):
-    cmd = commande.split()
-    if cmd[0] == "getPhoneNum":
-        print("getPhoneNum")
-        print(cmd[1])
-    elif cmd[0] == "getInvitationKey":
-        print("getInvitationKey")
-    elif cmd[0] == "signIn":
-        if len(cmd) != 4:
-            print("Bad Input: ...")
-            return
-        xmlM.addUser(cmd[1], cmd[2], cmd[3])
-
-
-    else:
-        print("Invalid callBack")
-
 HOST = 'localhost' #'192.168.1.44'
 PORT = 50000
 
@@ -37,6 +20,23 @@ class ThreadClient(threading.Thread):
         threading.Thread.__init__(self)
         self.connexion = conn
 
+    def callBack(self, commande):
+        cmd = commande.split()
+        if cmd[0] == "getPhoneNum":
+            num = xmlM.getNumberFromAlias(cmd[1])
+            self.connexion.send(num.encode("utf-8"))
+        elif cmd[0] == "getInvitationKey":
+            print("getInvitationKey")
+        elif cmd[0] == "signIn":
+            if len(cmd) != 4:
+                print("Bad Input: ...")
+                return
+            xmlM.addUser(cmd[1], cmd[2], cmd[3])
+
+
+        else:
+            print("Invalid callBack")
+
     def run(self):
         # Dialogue avec le client :
         nom = self.getName()        # Chaque thread possède un nom
@@ -47,7 +47,7 @@ class ThreadClient(threading.Thread):
                 msgtmp = str.encode("FIN")
                 self.connexion.send(msgtmp)
                 break
-            callBack(msgClient)
+            self.callBack(msgClient)
             self.connexion.send(str.encode("RECU"))
             message = "%s> %s" % (nom, msgClient)
             print(message)
@@ -61,6 +61,7 @@ class ThreadClient(threading.Thread):
         del conn_client[nom]        # supprimer son entrée dans le dictionnaire
         print("Client déconnecté:", nom)
         # Le thread se termine ici
+
 
 # Initialisation du serveur - Mise en place du socket :
 mySocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
