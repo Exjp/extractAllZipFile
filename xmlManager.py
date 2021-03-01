@@ -2,11 +2,11 @@ import xml.etree.ElementTree as ET
 
 import os
 import random
-import numpy
 #champ xml pour banni ou non, à exclure des fonctions getAliases, getnumberfromalias et random
 
 def init():
-    emptyXml()
+    if not os.path.isfile('page.xml'):
+        emptyXml()
     global tree
     tree = ET.parse('page.xml')
     global root
@@ -29,6 +29,7 @@ def addUser(aliasValue, numberValue, keyValue):
     key = ET.SubElement(user, "key")
     key.text = keyValue
     root.append(user)
+    tree.write('page.xml', encoding="utf-8", xml_declaration=True)
 
 
 # return un erreur si pas trouvé, nullptr, verif le nom en entrée
@@ -36,6 +37,7 @@ def removeUser(name):
     for elem in root:
         if elem.attrib['alias'] == name:
             root.remove(elem)
+    tree.write('page.xml', encoding="utf-8", xml_declaration=True)
 
 #verifier les noms en entrée, return un erreur si ça trouve rien, nullptr
 def getNumberFromAlias(name):
@@ -85,11 +87,7 @@ def randomUsers(num,sender):
 
 
 def main():
-    addUser("Thierry", "+33666666666", "key")
-    addUser("Jak", "+33626486623", "key2")
-    addUser("Martin", "+33648332047", "key3")
     x = getAliases()
-    tree.write('page.xml', encoding="utf-8", xml_declaration=True)
 
 if __name__ == "__main__":
     init()
