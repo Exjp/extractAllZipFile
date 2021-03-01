@@ -6,8 +6,11 @@ def callBack(commande):
     elif cmd[0] == "getInvitationKey":
         print("getInvitationKey")
     elif cmd[0] == "signIn":
-        print("signIn")
-        print(cmd)
+        if len(cmd) != 4:
+            print("Bad Input: ...")
+            return
+        xmlM.addUser(cmd[1], cmd[2], cmd[3])
+
 
     else:
         print("Invalid callBack")
@@ -16,6 +19,17 @@ HOST = 'localhost' #'192.168.1.44'
 PORT = 50000
 
 import socket, sys, threading
+import xmlManager as xmlM
+
+
+xmlM.init()
+
+
+
+
+
+
+
 
 class ThreadClient(threading.Thread):
     '''dérivation d'un objet thread pour gérer la connexion avec un client'''
