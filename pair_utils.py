@@ -61,6 +61,9 @@ def client_pair(name):
 
     cert.gmtime_adj_notBefore(0)
     cert.gmtime_adj_notAfter(10*365*24*60*60)
+
+    ca_subj = ca_cert.get_subject()
+    ca_subj.commonName = "CA"
     cert.set_issuer(ca_cert.get_subject())
     cert.set_subject(req.get_subject())
     cert.set_pubkey(req.get_pubkey())
@@ -84,3 +87,23 @@ def client_pair(name):
     key_name = name+"_key.pem"
     with open(key_name, "wb") as f:
         f.write(crypto.dump_privatekey(crypto.FILETYPE_PEM, key))
+
+def verify_certificate(certificate, trusted_list):
+    try:
+        str_cert = open(certificate, 'rt').read()
+        cert_to_verify = crypto.load_certificate(crypto.FILETYPE_PEM, str_cert)
+
+        store = crypto.X509Store()
+
+        for crt in trusted_list:
+            cert_str = open(crt, 'rt').read()
+            crt_to_add = crypto.load_certificate(crypto.FILETYPE_PEM, cert_str)
+            store.add_cert(crt_to_add)
+
+        ctx = crypto.X509StoreContext(store, cert_to_verify)
+        ctx.verify_certificate()
+
+        return True
+    except Exception as e:
+        print(e)
+        return False

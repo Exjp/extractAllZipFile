@@ -11,8 +11,8 @@ def encrypt(data, certPath):
     public = RSA.importKey(pKeyString)
 
     cipher = cipher_algorithm.new(public)
-    cipher_text = cipher.encrypt("Hello World!".encode())
-    sign = base64.b64encode(cipher_text)
+    cipher_text = cipher.encrypt(data.encode())
+    signed = base64.b64encode(cipher_text)
 
     return sign
 
@@ -28,11 +28,3 @@ def decrypt(cipherText, keyPath):
     x = x.decode('utf-8')
 
     return x
-
-#str = "Hello World!"
-#print(str)
-#print()
-#enc_str = encrypt(str, 'ca_crt.pem')
-#print(enc_str)
-#print()
-#print(decrypt(enc_str, 'ca_key.pem'))
