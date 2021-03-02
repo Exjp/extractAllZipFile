@@ -1,18 +1,12 @@
-HOST = 'localhost' #'192.168.1.44'
+HOST = '192.168.1.44' #'192.168.1.44'
 PORT = 50000
 
 import socket, sys, threading
 import xmlManager as xmlM
-
+from pair_utils import *
+import os
 
 xmlM.init()
-
-
-
-
-
-
-
 
 class ThreadClient(threading.Thread):
     '''dérivation d'un objet thread pour gérer la connexion avec un client'''
@@ -31,8 +25,17 @@ class ThreadClient(threading.Thread):
             if len(cmd) != 4:
                 print("Bad Input: ...")
                 return
-            xmlM.addUser(cmd[1], cmd[2], cmd[3])
+            #verif cmd[3]la clé d'invition
+            client_pair(cmd[1])
+            cert_str = open(cmd[1]+"_crt.pem", 'rt').read()
+            key_str = open(cmd[1]+"_key.pem", 'rt').read()
 
+            xmlM.addUser(cmd[1], cmd[2], cert_str)
+
+            keycert = cert_str + " " + key_str
+            self.connexion.send(keycert.encode("utf-8"))
+            os.remove(cmd[1]+"_crt.pem")
+            os.remove(cmd[1]+"_key.pem")
 
         else:
             print("Invalid callBack")
@@ -64,6 +67,12 @@ class ThreadClient(threading.Thread):
 
 
 # Initialisation du serveur - Mise en place du socket :
+try:
+    open("ca_crt.pem", "r")
+    open("ca_key.pem", "r")
+except:
+    CA_pair()
+
 mySocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 try:
     mySocket.bind((HOST, PORT))
