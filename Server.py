@@ -5,7 +5,6 @@ import socket, sys, threading
 import xmlManager as xmlM
 from pair_utils import *
 import os
-
 xmlM.init()
 
 class ThreadClient(threading.Thread):
@@ -13,17 +12,34 @@ class ThreadClient(threading.Thread):
     def __init__(self, conn):
         threading.Thread.__init__(self)
         self.connexion = conn
+    def receive(self):
+        msg = self.connexion.recv(1024).decode("utf-8").split("_|_")
+        if msg == "":
+            return
+        while msg[-1] != "END_COMMUNICATION":
+            msg += self.connexion.recv(1024).decode("utf-8").split("_|_")
+        del msg[-1]
+        print(msg)
+        return msg
+
+
+    def sendMessage(self, msg):
+        msg += "_|_END_COMMUNICATION"
+        self.connexion.send(msg.encode("utf-8"))
+
 
     def callBack(self, commande):
-        cmd = commande.split()
+        cmd = commande[0].split()
         if cmd[0] == "getPhoneNum":
+            #rajouter envoie certif
             num = xmlM.getNumberFromAlias(cmd[1])
-            self.connexion.send(num.encode("utf-8"))
+            self.sendMessage(num)
         elif cmd[0] == "getInvitationKey":
             print("getInvitationKey")
         elif cmd[0] == "signIn":
             if len(cmd) != 4:
                 print("Bad Input: ...")
+                self.sendMessage("Bad Input: ...")
                 return
             #verif cmd[3]la clé d'invition
             client_pair(cmd[1])
@@ -32,26 +48,28 @@ class ThreadClient(threading.Thread):
 
             xmlM.addUser(cmd[1], cmd[2], cert_str)
 
-            keycert = cert_str + " " + key_str
-            self.connexion.send(keycert.encode("utf-8"))
+            keyCert = cert_str + " " + key_str
+            self.sendMessage(keyCert)
             os.remove(cmd[1]+"_crt.pem")
             os.remove(cmd[1]+"_key.pem")
+        elif cmd[0] == "getPhoneNumList":
+            return
 
         else:
             print("Invalid callBack")
+            self.sendMessage("Invalid callBack")
 
     def run(self):
         # Dialogue avec le client :
         nom = self.getName()        # Chaque thread possède un nom
+
         while 1:
-            msgClient = self.connexion.recv(1024)
-            msgClient = msgClient.decode("utf-8")
-            if msgClient.upper() == "FIN" or msgClient =="":
-                msgtmp = str.encode("FIN")
-                self.connexion.send(msgtmp)
+            msgClient = self.receive()
+            if msgClient[-1].upper() == "FIN":
+                self.sendMessage("FIN")
                 break
+            #self.connexion.send(str.encode("RECU"))
             self.callBack(msgClient)
-            self.connexion.send(str.encode("RECU"))
             message = "%s> %s" % (nom, msgClient)
             print(message)
             # Faire suivre le message à tous les autres clients :
@@ -84,6 +102,7 @@ mySocket.listen(500)
 
 # Attente et prise en charge des connexions demandées par les clients :
 conn_client = {}                # dictionnaire des connexions clients
+
 while 1:
     connexion, adresse = mySocket.accept()
     # Créer un nouvel objet thread pour gérer la connexion :
@@ -94,4 +113,4 @@ while 1:
     conn_client[it] = connexion
     print ("Client %s connecté, adresse IP %s, port %s." %(it, adresse[0], adresse[1]))
     # Dialogue avec le client :
-    connexion.send(str.encode("Vous êtes connecté. Envoyez vos messages."))
+    connexion.send(str.encode("Vous êtes connecté. Envoyez vos messages._|_END_COMMUNICATION"))

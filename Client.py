@@ -3,13 +3,28 @@
 
 import socket, sys
 
+
+def receive():
+    msg = mySocket.recv(1024).decode("utf-8").split("_|_")
+    if msg == "":
+        return
+    while msg[-1] != "END_COMMUNICATION":
+        msg += mySocket.recv(1024).decode("utf-8").split("_|_")
+    return msg
+
+def send(msg):
+    msg += "_|_END_COMMUNICATION"
+    mySocket.send(msg.encode("utf-8"))
+
+
 HOST = 'localhost' #'192.168.1.44'
 PORT = 50000
 
-# 1) création du socket :
+
 mySocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-# 2) envoi d'une requête de connexion au serveur :
+
+
 try:
     mySocket.connect((HOST, PORT))
 except socket.error:
@@ -18,19 +33,18 @@ except socket.error:
 print("Connexion établie avec le serveur.")
 
 
-msgServeur = mySocket.recv(1024).decode("utf-8")
-
+msgServeur = receive()
 while 1:
-    if msgServeur.upper() == "FIN" or msgServeur =="":
+    if msgServeur[0].upper() == "FIN":
         break
     print(msgServeur)
-    msgClient = str.encode("bonjour")
     msgClient = input("Ecrire :")
 
-    mySocket.send(str.encode(msgClient))
+    send(msgClient)
 
-    msgServeur = mySocket.recv(1024)
-    msgServeur = msgServeur.decode("utf-8")
+    msgServeur = receive()
+
+
 
 # 4) Fermeture de la connexion :
 print("Connexion interrompue.")
