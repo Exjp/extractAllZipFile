@@ -47,10 +47,13 @@ def keyUnique(keyValue):
     return unique
 
 # vérifier que les champs sont uniques, vérifier que les champs sont corrects -> return une erreur sinon
-def addUser(aliasValue, numberValue, keyValue):
+# hash les mdps
+def addUser(aliasValue, passValue, numberValue, keyValue):
     if aliasUnique(aliasValue) and numberUnique(numberValue) and keyUnique(keyValue):
         user = ET.Element('user')
         user.set("alias", aliasValue)
+        password = ET.SubElement(user, "password")
+        password.text = passValue
         number = ET.SubElement(user, "number")
         number.text = numberValue
         key = ET.SubElement(user, "key")
@@ -67,6 +70,15 @@ def removeUserFromName(name):
         if elem.attrib['alias'] == name:
             root.remove(elem)
     treeWrite()
+
+def login(alias, password):
+    for elem in root:
+        if elem.attrib['alias'] == alias:
+            for var in elem:
+                if var.tag == "password":
+                    if var.text == password:
+                        return True
+    return False
 
 def removeUserFromNumber(number):
     treeWrite()
@@ -125,12 +137,10 @@ def randomUsers(num,sender):
 
 
 def main():
-    addUser("Thierry", "+33666666666", "key")
     x = getAliases()
 
 if __name__ == "__main__":
     init()
     main()
-    print(randomUsers(2,"Jak"))
 
 
