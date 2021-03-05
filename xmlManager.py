@@ -2,15 +2,18 @@ import xml.etree.ElementTree as ET
 
 import os
 import random
-
 #champ xml pour banni ou non, à exclure des fonctions getAliases, getnumberfromalias et random
 
 def init():
-    emptyXml()
+    if not os.path.isfile('page.xml'):
+        emptyXml()
     global tree
     tree = ET.parse('page.xml')
     global root
     root = tree.getroot()
+
+def treeWrite():
+    tree.write('page.xml', encoding="utf-8", xml_declaration=True)
 
 
 def emptyXml():
@@ -20,22 +23,71 @@ def emptyXml():
            xml_declaration=True,encoding='utf-8',
            method="xml")
 
+def aliasUnique(aliasValue):
+    unique = True
+    for elem in root:
+        if elem.attrib['alias'] == aliasValue:
+            unique = False
+    return unique
+
+def numberUnique(numberValue):
+    unique = True
+    for elem in root:
+        for var in elem:
+            if var.text == numberValue:
+                 unique = False
+    return unique
+
+def keyUnique(keyValue):
+    unique = True
+    for elem in root:
+        for var in elem:
+            if var.text == keyValue:
+                unique = False
+    return unique
+
 # vérifier que les champs sont uniques, vérifier que les champs sont corrects -> return une erreur sinon
-def addUser(aliasValue, numberValue, keyValue):
-    user = ET.Element('user')
-    user.set("alias", aliasValue)
-    number = ET.SubElement(user, "number")
-    number.text = numberValue
-    key = ET.SubElement(user, "key")
-    key.text = keyValue
-    root.append(user)
+# hash les mdps
+def addUser(aliasValue, passValue, numberValue, keyValue):
+    if aliasUnique(aliasValue) and numberUnique(numberValue) and keyUnique(keyValue):
+        user = ET.Element('user')
+        user.set("alias", aliasValue)
+        password = ET.SubElement(user, "password")
+        password.text = passValue
+        number = ET.SubElement(user, "number")
+        number.text = numberValue
+        key = ET.SubElement(user, "key")
+        key.text = keyValue
+        root.append(user)
+        treeWrite()
+    else :
+        print("User already exists")
 
 
 # return un erreur si pas trouvé, nullptr, verif le nom en entrée
-def removeUser(name):
+def removeUserFromName(name):
     for elem in root:
         if elem.attrib['alias'] == name:
             root.remove(elem)
+    treeWrite()
+
+def login(alias, password):
+    for elem in root:
+        if elem.attrib['alias'] == alias:
+            for var in elem:
+                if var.tag == "password":
+                    if var.text == password:
+                        return True
+    return False
+
+def removeUserFromNumber(number):
+    treeWrite()
+
+def banUser():
+    treeWrite()
+
+def unbanUser():
+    treeWrite()
 
 #verifier les noms en entrée, return un erreur si ça trouve rien, nullptr
 def getNumberFromAlias(name):
@@ -85,15 +137,10 @@ def randomUsers(num,sender):
 
 
 def main():
-    addUser("Thierry", "+33666666666", "key")
-    addUser("Jak", "+33626486623", "key2")
-    addUser("Martin", "+33648332047", "key3")
     x = getAliases()
-    tree.write('page.xml', encoding="utf-8", xml_declaration=True)
 
 if __name__ == "__main__":
     init()
     main()
-    print(randomUsers(2,"Jak"))
 
 

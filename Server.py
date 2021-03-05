@@ -1,54 +1,75 @@
-def callBack(commande):
-    cmd = commande.split()
-    if cmd[0] == "getPhoneNum":
-        print("getPhoneNum")
-        print(cmd[1])
-    elif cmd[0] == "getInvitationKey":
-        print("getInvitationKey")
-    elif cmd[0] == "signIn":
-        if len(cmd) != 4:
-            print("Bad Input: ...")
-            return
-        xmlM.addUser(cmd[1], cmd[2], cmd[3])
-
-
-    else:
-        print("Invalid callBack")
-
-HOST = 'localhost' #'192.168.1.44'
+HOST = '192.168.1.44' #'192.168.1.44'
 PORT = 50000
 
 import socket, sys, threading
 import xmlManager as xmlM
-
-
+from pair_utils import *
+import os
 xmlM.init()
-
-
-
-
-
-
-
 
 class ThreadClient(threading.Thread):
     '''dérivation d'un objet thread pour gérer la connexion avec un client'''
     def __init__(self, conn):
         threading.Thread.__init__(self)
         self.connexion = conn
+    def receive(self):
+        msg = self.connexion.recv(1024).decode("utf-8").split("_|_")
+        if msg == "":
+            return
+        while msg[-1] != "END_COMMUNICATION":
+            msg += self.connexion.recv(1024).decode("utf-8").split("_|_")
+        del msg[-1]
+        print(msg)
+        return msg
+
+
+    def sendMessage(self, msg):
+        msg += "_|_END_COMMUNICATION"
+        self.connexion.send(msg.encode("utf-8"))
+
+
+    def callBack(self, commande):
+        cmd = commande[0].split()
+        if cmd[0] == "getPhoneNum":
+            #rajouter envoie certif
+            num = xmlM.getNumberFromAlias(cmd[1])
+            self.sendMessage(num)
+        elif cmd[0] == "getInvitationKey":
+            print("getInvitationKey")
+        elif cmd[0] == "signIn":
+            if len(cmd) != 4:
+                print("Bad Input: ...")
+                self.sendMessage("Bad Input: ...")
+                return
+            #verif cmd[3]la clé d'invition
+            client_pair(cmd[1])
+            cert_str = open(cmd[1]+"_crt.pem", 'rt').read()
+            key_str = open(cmd[1]+"_key.pem", 'rt').read()
+
+            xmlM.addUser(cmd[1], cmd[2], cert_str)
+
+            keyCert = cert_str + " " + key_str
+            self.sendMessage(keyCert)
+            os.remove(cmd[1]+"_crt.pem")
+            os.remove(cmd[1]+"_key.pem")
+        elif cmd[0] == "getPhoneNumList":
+            return
+
+        else:
+            print("Invalid callBack")
+            self.sendMessage("Invalid callBack")
 
     def run(self):
         # Dialogue avec le client :
         nom = self.getName()        # Chaque thread possède un nom
+
         while 1:
-            msgClient = self.connexion.recv(1024)
-            msgClient = msgClient.decode("utf-8")
-            if msgClient.upper() == "FIN" or msgClient =="":
-                msgtmp = str.encode("FIN")
-                self.connexion.send(msgtmp)
+            msgClient = self.receive()
+            if msgClient[-1].upper() == "FIN":
+                self.sendMessage("FIN")
                 break
-            callBack(msgClient)
-            self.connexion.send(str.encode("RECU"))
+            #self.connexion.send(str.encode("RECU"))
+            self.callBack(msgClient)
             message = "%s> %s" % (nom, msgClient)
             print(message)
             # Faire suivre le message à tous les autres clients :
@@ -62,7 +83,14 @@ class ThreadClient(threading.Thread):
         print("Client déconnecté:", nom)
         # Le thread se termine ici
 
+
 # Initialisation du serveur - Mise en place du socket :
+try:
+    open("ca_crt.pem", "r")
+    open("ca_key.pem", "r")
+except:
+    CA_pair()
+
 mySocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 try:
     mySocket.bind((HOST, PORT))
@@ -74,6 +102,7 @@ mySocket.listen(500)
 
 # Attente et prise en charge des connexions demandées par les clients :
 conn_client = {}                # dictionnaire des connexions clients
+
 while 1:
     connexion, adresse = mySocket.accept()
     # Créer un nouvel objet thread pour gérer la connexion :
@@ -84,4 +113,4 @@ while 1:
     conn_client[it] = connexion
     print ("Client %s connecté, adresse IP %s, port %s." %(it, adresse[0], adresse[1]))
     # Dialogue avec le client :
-    connexion.send(str.encode("Vous êtes connecté. Envoyez vos messages."))
+    connexion.send(str.encode("Vous êtes connecté. Envoyez vos messages._|_END_COMMUNICATION"))

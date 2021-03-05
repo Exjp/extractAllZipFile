@@ -19,12 +19,12 @@ def CA_pair():
     ])
 
     ca_cert.add_extensions([
-        crypto.X509Extension("authorityKeyIdentifier".encode('utf-8'), False, "keyid:always".encode('utf-8'), issuer=ca_cert),
+        crypto.X509Extension("authorityKeyIdentifier".encode('utf-8'), False, "keyid:always, issuer:always".encode('utf-8'), issuer=ca_cert),
     ])
 
     ca_cert.add_extensions([
-        crypto.X509Extension("basicConstraints".encode('utf-8'), False, "CA:TRUE".encode('utf-8')),
-        crypto.X509Extension("keyUsage".encode('utf-8'), False, "keyCertSign, cRLSign".encode('utf-8')),
+        crypto.X509Extension("basicConstraints".encode('utf-8'), False, "CA:TRUE, pathlen:1".encode('utf-8')),
+        crypto.X509Extension("keyUsage".encode('utf-8'), False, "keyCertSign, cRLSign, digitalSignature, nonRepudiation".encode('utf-8')),
     ])
 
     ca_cert.set_issuer(ca_subj)
@@ -62,17 +62,15 @@ def client_pair(name):
     cert.gmtime_adj_notBefore(0)
     cert.gmtime_adj_notAfter(10*365*24*60*60)
 
-    ca_subj = ca_cert.get_subject()
-    ca_subj.commonName = "CA"
     cert.set_issuer(ca_cert.get_subject())
     cert.set_subject(req.get_subject())
     cert.set_pubkey(req.get_pubkey())
     cert.sign(ca_key, 'sha256')
 
     cert.add_extensions([
-        crypto.X509Extension("authorityKeyIdentifier".encode('utf-8'), False, "keyid:always".encode('utf-8'), issuer=ca_cert),
+        crypto.X509Extension("authorityKeyIdentifier".encode('utf-8'), False, "keyid:always, issuer:always".encode('utf-8'), issuer=ca_cert),
         crypto.X509Extension("extendedKeyUsage".encode('utf-8'), False, "clientAuth".encode('utf-8')),
-        crypto.X509Extension("keyUsage".encode('utf-8'), False, "digitalSignature".encode('utf-8')),
+        crypto.X509Extension("keyUsage".encode('utf-8'), False, "digitalSignature, nonRepudiation".encode('utf-8')),
     ])
 
     cert.add_extensions([

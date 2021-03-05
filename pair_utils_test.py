@@ -1,4 +1,5 @@
 from pair_utils import *
+import time
 
 test_counter = 0
 
@@ -16,13 +17,15 @@ try:
 except:
     print("---Unable to generate client pair---")
 
-if (verify_certificate("test_crt.pem", []) == True):
+time.sleep(1)
+
+if (verify_certificate("test_crt.pem", ["ca_crt.pem"]) == True):
     print("---Test failed: the function returned True while the certificate was not in the trusted list---")
 else:
     print("---Successfully returned False when the certificate was not in the trusted list---")
     test_counter+=1
 
-if (verify_certificate("test_crt.pem", ["test_crt.pem"]) == True):
+if (verify_certificate("test_crt.pem", ["ca_crt.pem","test_crt.pem"]) == True):
     print("---Successfully returned True when the certificate was in the trusted list---")
     test_counter+=1
 else:

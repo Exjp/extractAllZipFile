@@ -3,7 +3,8 @@ from Crypto.Cipher import PKCS1_v1_5 as cipher_algorithm
 from OpenSSL import crypto
 import base64
 
-def encrypt(data, certPath):
+def encrypt(data, pseudo):
+    certPath = pseudo+"_crt.pem"
     str_cert = open(certPath, 'rt').read()
     cert = crypto.load_certificate(crypto.FILETYPE_PEM, str_cert)
     pKey = cert.get_pubkey()
@@ -16,7 +17,8 @@ def encrypt(data, certPath):
 
     return sign
 
-def decrypt(cipherText, keyPath):
+def decrypt(cipherText):
+    keyPath = "ca_key.pem"
     with open(keyPath,'rb') as fk:
     	priv = fk.read()
     	fk.close()
