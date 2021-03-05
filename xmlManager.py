@@ -2,7 +2,7 @@ import xml.etree.ElementTree as ET
 
 import os
 import random
-import numpy
+
 #champ xml pour banni ou non, à exclure des fonctions getAliases, getnumberfromalias et random
 
 def init():
