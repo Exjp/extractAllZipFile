@@ -2,6 +2,8 @@ import xml.etree.ElementTree as ET
 
 import os
 import random
+import bcrypt
+
 #champ xml pour banni ou non, à exclure des fonctions getAliases, getnumberfromalias et random
 
 def init():
@@ -46,14 +48,19 @@ def keyUnique(keyValue):
                 unique = False
     return unique
 
+
 # vérifier que les champs sont uniques, vérifier que les champs sont corrects -> return une erreur sinon
 # hash les mdps
 def addUser(aliasValue, passValue, numberValue, keyValue):
     if aliasUnique(aliasValue) and numberUnique(numberValue) and keyUnique(keyValue):
         user = ET.Element('user')
         user.set("alias", aliasValue)
+        
         password = ET.SubElement(user, "password")
-        password.text = passValue
+        salt = bcrypt.gensalt()
+        hashed_password = bcrypt.hashpw(passValue.encode('utf-8'), salt)
+        password.text = hashed_password.decode('utf8')
+        
         number = ET.SubElement(user, "number")
         number.text = numberValue
         key = ET.SubElement(user, "key")
@@ -72,11 +79,12 @@ def removeUserFromName(name):
     treeWrite()
 
 def login(alias, password):
+
     for elem in root:
         if elem.attrib['alias'] == alias:
             for var in elem:
                 if var.tag == "password":
-                    if var.text == password:
+                    if bcrypt.checkpw(password.encode('utf8'), (var.text).encode()):
                         return True
     return False
 
@@ -87,6 +95,9 @@ def banUser():
     treeWrite()
 
 def unbanUser():
+    treeWrite()
+
+def getInvitationKey(name):
     treeWrite()
 
 #verifier les noms en entrée, return un erreur si ça trouve rien, nullptr
@@ -117,7 +128,7 @@ def getAliases():
 def randomUsers(num,sender):
     listAlias = getAliases()
     listAlias.pop(listAlias.index(sender))
-    
+    num=int(num)
     sizeListAlias = len(listAlias)
     tmpList = [[0 for x in range(num)] for y in range(2)]
 
